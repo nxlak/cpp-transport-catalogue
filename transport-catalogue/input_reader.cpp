@@ -122,20 +122,20 @@ void InputReader::ApplyCommands([[maybe_unused]] TransportCatalogue& catalogue) 
             buffer.push_back(com);
             continue;
         }
-        TransportCatalogue::Stop new_stop;
+        Stop new_stop;
         new_stop.name = com.id;
         new_stop.coord = detail::ParseCoordinates(com.description);
         catalogue.AddStop(std::move(new_stop));
     }
     
     for (const auto& buf : buffer) {
-        TransportCatalogue::Bus new_bus;
+        Bus new_bus;
         new_bus.name = buf.id;
-        std::vector<TransportCatalogue::Stop*> stops_for_bus;
+        std::vector<Stop*> stops_for_bus;
         for (const std::string_view stop : detail::ParseRoute(buf.description)) {
-            const TransportCatalogue::Stop* stop_ptr = catalogue.FindStop(stop);
+            const Stop* stop_ptr = catalogue.FindStop(stop);
             if (stop_ptr) {
-                stops_for_bus.push_back(const_cast<TransportCatalogue::Stop*>(stop_ptr));
+                stops_for_bus.push_back(const_cast<Stop*>(stop_ptr));
             }
         }
         new_bus.stops = stops_for_bus;
