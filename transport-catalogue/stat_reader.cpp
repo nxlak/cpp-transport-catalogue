@@ -12,17 +12,16 @@ void ParseAndPrintStat(const TransportCatalogue& transport_catalogue, std::strin
     if (request.starts_with("Bus ")) {
         std::string_view prefix = "Bus ";
         request.remove_prefix(prefix.size());
-        const TransportCatalogue::Bus* bus = transport_catalogue.FindBus(request);
-
-        if (bus) {
-            TransportCatalogue::BusInfo info = transport_catalogue.GetBusInfo(request);
-            
+        
+        auto info = transport_catalogue.GetBusInfo(request);
+        if (info.has_value()) {
+            const BusInfo& bus_info = info.value();
             output << "Bus " << request << ": " 
-                   << info.stops_count << " stops on route, "
-                   << info.unique_stops_count << " unique stops, " 
-                   << info.distance << " route length\n";
-            
-        } else {
+                   << bus_info.stops_count << " stops on route, "
+                   << bus_info.unique_stops_count << " unique stops, " 
+                   << bus_info.distance << " route length\n";
+        }
+        else {
             output << "Bus " << request << ": not found\n"; 
         }
     } else if (request.starts_with("Stop ")) {
@@ -32,7 +31,7 @@ void ParseAndPrintStat(const TransportCatalogue& transport_catalogue, std::strin
         const auto& buses = transport_catalogue.GetBusesByStop(request);
         
         if (buses.empty()) {
-            const TransportCatalogue::Stop* stop = transport_catalogue.FindStop(request);
+            const Stop* stop = transport_catalogue.FindStop(request);
             if (!stop) {
                 output << "Stop " << request << ": not found\n";
             } else {
