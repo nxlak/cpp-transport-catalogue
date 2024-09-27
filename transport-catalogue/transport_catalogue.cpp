@@ -33,20 +33,33 @@ double TransportCatalogue::CalculateRouteLength(const std::vector<std::string>& 
         const Stop* from_stop = FindStop(stop_names[i]);
         const Stop* to_stop = FindStop(stop_names[i + 1]);
         if (from_stop && to_stop) {
+            total_length += GetStopsDistance(from_stop, to_stop);
+        }
+    }
+   return total_length;
+}
+
+double TransportCatalogue::CalculateGeoLength(const std::vector<std::string>& stop_names) const {
+    double total_length = 0.0;
+        
+    for (size_t i = 0; i < stop_names.size() - 1; ++i) {
+        const Stop* from_stop = FindStop(stop_names[i]);
+        const Stop* to_stop = FindStop(stop_names[i + 1]);
+        if (from_stop && to_stop) {
             total_length += geo::ComputeDistance(from_stop->coord, to_stop->coord);
         }
     }
 
    return total_length;
 }
-
+    
 std::optional<BusInfo> TransportCatalogue::GetBusInfo(std::string_view bus_name) const {
     const Bus* bus = FindBus(bus_name);
     if (!bus) {
         return std::nullopt; 
     }
 
-    BusInfo info = {0, 0, 0.0};
+    BusInfo info = {0, 0, 0.0, 0.0};
     info.stops_count = bus->stops.size();
     std::unordered_set<Stop*> unique_stops(bus->stops.begin(), bus->stops.end());
     info.unique_stops_count = unique_stops.size();
@@ -56,7 +69,10 @@ std::optional<BusInfo> TransportCatalogue::GetBusInfo(std::string_view bus_name)
         for (const auto& stop : bus->stops) {
             stop_names.push_back(stop->name);
         }
-        info.distance = CalculateRouteLength(stop_names);
+        double route = CalculateRouteLength(stop_names);
+        info.distance = route;
+        double geo = CalculateGeoLength(stop_names);
+        info.curvature = route / geo;
     }
     return info;   
 }
@@ -75,5 +91,24 @@ std::vector<std::string_view> TransportCatalogue::GetBusesByStop(std::string_vie
     std::sort(res.begin(), res.end());
     return res;
 }
+
+void TransportCatalogue::AddStopsDistance(const Stop* from, const Stop* to, int di) {
+    stops_di_[{from, to}] = di;
+    if (stops_di_.find({to, from}) == stops_di_.end()) {
+        stops_di_[{to, from}] = di;
+    }
+}
+    
+int TransportCatalogue::GetStopsDistance(const Stop* from, const Stop* to) const {
+    auto it = stops_di_.find({from, to});
+    if (it != stops_di_.end()) {
+        return it->second;
+    }
+    it = stops_di_.find({to, from});
+    if (it != stops_di_.end()) {
+        return it->second;
+    }
+    return 0;
+}    
     
 } //namespace transport_catalogue 
