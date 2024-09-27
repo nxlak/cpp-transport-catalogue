@@ -19,7 +19,8 @@ void ParseAndPrintStat(const TransportCatalogue& transport_catalogue, std::strin
             output << "Bus " << request << ": " 
                    << bus_info.stops_count << " stops on route, "
                    << bus_info.unique_stops_count << " unique stops, " 
-                   << bus_info.distance << " route length\n";
+                   << bus_info.distance << " route length, " 
+                   << bus_info.curvature << " curvature\n";
         }
         else {
             output << "Bus " << request << ": not found\n"; 
