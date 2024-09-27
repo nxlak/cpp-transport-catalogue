@@ -110,36 +110,66 @@ void InputReader::ParseLine(std::string_view line) {
     }
 }
 
-void InputReader::ApplyCommands([[maybe_unused]] TransportCatalogue& catalogue) {
-    // Реализуйте метод самостоятельно
+void InputReader::ApplyCommands(TransportCatalogue& catalogue) {
     if (commands_.empty()) {
         return;
     }
-    std::vector<CommandDescription> buffer;
+
+    std::vector<CommandDescription> stops_buffer;
+
+    // Первый проход: добавляем остановки с координатами
     for (const auto& com : commands_) {
-        //сначала добавляем все остановки, только потом пробегаем по буфферу с маршрутами
-        if (com.command == "Bus") {
-            buffer.push_back(com);
+        if (com.command == "Stop") {
+            Stop new_stop;
+            new_stop.name = com.id;
+            new_stop.coord = detail::ParseCoordinates(com.description);
+            catalogue.AddStop(std::move(new_stop));
+            stops_buffer.push_back(com); // Сохраняем описания остановок в буфер
+        }
+    }
+
+    // Второй проход: добавляем расстояния до соседних остановок
+    for (const auto& com : stops_buffer) {
+        auto stop_name = com.id;
+        auto distances_str = com.description;
+
+        // Получаем указатель на добавленную остановку
+        const Stop* current_stop = catalogue.FindStop(stop_name);
+        if (!current_stop) {
             continue;
         }
-        Stop new_stop;
-        new_stop.name = com.id;
-        new_stop.coord = detail::ParseCoordinates(com.description);
-        catalogue.AddStop(std::move(new_stop));
-    }
-    
-    for (const auto& buf : buffer) {
-        Bus new_bus;
-        new_bus.name = buf.id;
-        std::vector<Stop*> stops_for_bus;
-        for (const std::string_view stop : detail::ParseRoute(buf.description)) {
-            const Stop* stop_ptr = catalogue.FindStop(stop);
-            if (stop_ptr) {
-                stops_for_bus.push_back(const_cast<Stop*>(stop_ptr));
+
+        // Разбиваем строку с расстояниями
+        auto distances = detail::Split(distances_str, ',');
+        for (const auto& distance : distances) {
+            auto trimmed = detail::Trim(distance);
+            auto to_stop_name = trimmed.substr(trimmed.find("to") + 3); // Ищем "to" и сдвигаем указатель дальше
+            int distance_value = std::stoi(std::string(trimmed.substr(0, trimmed.find('m'))));
+
+            // Ищем соседнюю остановку
+            const Stop* to_stop = catalogue.FindStop(to_stop_name);
+            if (to_stop) {
+                catalogue.AddStopsDistance(current_stop, to_stop, distance_value);
             }
         }
-        new_bus.stops = stops_for_bus;
-        catalogue.AddBus(std::move(new_bus));
+    }
+
+    // Обработка команд на добавление маршрутов
+    for (const auto& com : commands_) {
+        if (com.command == "Bus") {
+            Bus new_bus;
+            new_bus.name = com.id;
+            std::vector<Stop*> stops_for_bus;
+
+            for (const std::string_view stop : detail::ParseRoute(com.description)) {
+                const Stop* stop_ptr = catalogue.FindStop(stop);
+                if (stop_ptr) {
+                    stops_for_bus.push_back(const_cast<Stop*>(stop_ptr));
+                }
+            }
+            new_bus.stops = stops_for_bus;
+            catalogue.AddBus(std::move(new_bus));
+        }
     }
 }
     
