@@ -16,11 +16,17 @@ namespace transport_catalogue {
 struct Stop {
     std::string name;
     geo::Coordinates coord;
+    
+    geo::Coordinates GetCoordinates() const {
+        return coord;
+    }
 };
     
 struct Bus {
     std::string name;
-    std::vector<Stop*> stops;
+    std::vector<const Stop*> stops;
+    bool is_roundtrip;
+    const Stop* last_elem; 
 };
     
 struct BusInfo {
@@ -51,6 +57,13 @@ public:
     std::vector<std::string_view> GetBusesByStop(std::string_view stop_name) const;
     void AddStopsDistance(const Stop* from, const Stop* to, int di);
     int GetStopsDistance(const Stop* from, const Stop* to) const;
+    std::deque<Bus> GetBuses() const {
+        return buses_;
+    }
+    std::deque<Stop> GetStops() const {
+        return stops_;
+    }
+
 private:
     std::deque<Stop> stops_; 
     std::unordered_map<std::string_view, Stop*> stopname_to_stop_;

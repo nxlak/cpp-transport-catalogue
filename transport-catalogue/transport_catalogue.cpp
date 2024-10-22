@@ -61,7 +61,7 @@ std::optional<BusInfo> TransportCatalogue::GetBusInfo(std::string_view bus_name)
 
     BusInfo info = {0, 0, 0.0, 0.0};
     info.stops_count = bus->stops.size();
-    std::unordered_set<Stop*> unique_stops(bus->stops.begin(), bus->stops.end());
+    std::unordered_set<const Stop*> unique_stops(bus->stops.begin(), bus->stops.end());
     info.unique_stops_count = unique_stops.size();
 
     if (!bus->stops.empty()) {
