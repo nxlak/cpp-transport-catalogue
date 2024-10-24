@@ -11,8 +11,6 @@
 
 namespace map_renderer {
     
-using namespace transport_catalogue; 
-    
 inline const double EPSILON = 1e-6;
 
 bool IsZero(double value); 
@@ -82,14 +80,14 @@ struct RenderSettings {
     std::pair<double, double> bus_label_offset;
     int stop_label_font_size;
     std::pair<double, double> stop_label_offset;
-    json::Node underlayer_color; 
+    svg::Color underlayer_color;
     double underlayer_width;
-    std::vector<json::Node> color_palette; 
+    std::vector<svg::Color> color_palette;
 };
 
 class MapRenderer {
 public:
-    std::string RenderSvg(const RenderSettings& settings, const TransportCatalogue& catalogue);
+    std::string RenderSvg(const RenderSettings& settings, const transport_catalogue::TransportCatalogue& catalogue);
 };
     
 } // map_renderer

@@ -22,28 +22,10 @@ public:
     using Value = std::variant<std::nullptr_t, Array, Dict, bool, int, double, std::string>;
 
     Node() = default;
-    Node(std::nullptr_t)
-        : value_(nullptr) {
-    }
-    Node(int val)
-        : value_(val) {
-    }
-    Node(double val)
-        : value_(val) {
-    }
-    Node(std::string val)
-        : value_(std::move(val)) {
-    }
-    Node(Array val)
-        : value_(std::move(val)) {
-    }
-    Node(Dict val)
-        : value_(std::move(val)) {
-    }
-    Node(bool val)
-        : value_(val) {
-    }
-
+    
+    template <typename T>
+    Node(T val);
+    
     bool IsInt() const {
         return std::holds_alternative<int>(value_);
     }
@@ -144,7 +126,12 @@ public:
 private:
     Value value_;
 };
-
+    
+template <typename T>
+Node::Node(T val) : value_(val) {
+    
+}
+    
 inline bool operator!=(const Node& lhs, const Node& rhs) {
     return !(lhs == rhs);
 }
