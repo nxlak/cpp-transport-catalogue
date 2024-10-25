@@ -1,7 +1,28 @@
 #include "json_reader.h"
 
 namespace json_reader {
-
+    
+void ParseColor(const json::Node& color_node, svg::Color& color) {
+    if (color_node.IsArray()) {
+        if (color_node.AsArray().size() == 3) {
+            color = svg::Rgb(
+                static_cast<uint8_t>(color_node.AsArray().at(0).AsInt()),
+                static_cast<uint8_t>(color_node.AsArray().at(1).AsInt()),
+                static_cast<uint8_t>(color_node.AsArray().at(2).AsInt())
+            );
+        } else if (color_node.AsArray().size() == 4) {
+            color = svg::Rgba(
+                static_cast<uint8_t>(color_node.AsArray().at(0).AsInt()),
+                static_cast<uint8_t>(color_node.AsArray().at(1).AsInt()),
+                static_cast<uint8_t>(color_node.AsArray().at(2).AsInt()),
+                color_node.AsArray().at(3).AsDouble()
+            );
+        }
+    } else if (color_node.IsString()) {
+        color = color_node.AsString();
+    }
+}
+    
 void JsonReader::ProcessRenderSettings(const json::Node& node, map_renderer::RenderSettings& settings) {
     settings.width = node.AsMap().at("width").AsDouble();
     settings.height = node.AsMap().at("height").AsDouble();
@@ -13,28 +34,11 @@ void JsonReader::ProcessRenderSettings(const json::Node& node, map_renderer::Ren
                                  node.AsMap().at("bus_label_offset").AsArray().at(1).AsDouble()};
     settings.stop_label_font_size = node.AsMap().at("stop_label_font_size").AsInt();
     settings.stop_label_offset = {node.AsMap().at("stop_label_offset").AsArray().at(0).AsDouble(), 
-                                 node.AsMap().at("stop_label_offset").AsArray().at(1).AsDouble()};
+                                  node.AsMap().at("stop_label_offset").AsArray().at(1).AsDouble()};
 
     json::Node underlayer_color_node = node.AsMap().at("underlayer_color");
     svg::Color underlayer_color;
-    if (underlayer_color_node.IsArray()) {
-        if (underlayer_color_node.AsArray().size() == 3) {
-            underlayer_color = svg::Rgb(
-                static_cast<uint8_t>(underlayer_color_node.AsArray().at(0).AsInt()),
-                static_cast<uint8_t>(underlayer_color_node.AsArray().at(1).AsInt()),
-                static_cast<uint8_t>(underlayer_color_node.AsArray().at(2).AsInt())
-            );
-        } else if (underlayer_color_node.AsArray().size() == 4) {
-            underlayer_color = svg::Rgba(
-                static_cast<uint8_t>(underlayer_color_node.AsArray().at(0).AsInt()),
-                static_cast<uint8_t>(underlayer_color_node.AsArray().at(1).AsInt()),
-                static_cast<uint8_t>(underlayer_color_node.AsArray().at(2).AsInt()),
-                underlayer_color_node.AsArray().at(3).AsDouble()
-            );
-        }
-    } else if (underlayer_color_node.IsString()) {
-        underlayer_color = underlayer_color_node.AsString();
-    }
+    ParseColor(underlayer_color_node, underlayer_color);
     settings.underlayer_color = underlayer_color;
 
     settings.underlayer_width = node.AsMap().at("underlayer_width").AsDouble();
@@ -42,24 +46,7 @@ void JsonReader::ProcessRenderSettings(const json::Node& node, map_renderer::Ren
     json::Node color_palette_node = node.AsMap().at("color_palette");
     for (const auto& color_node : color_palette_node.AsArray()) {
         svg::Color color;
-        if (color_node.IsArray()) {
-            if (color_node.AsArray().size() == 3) {
-                color = svg::Rgb(
-                    static_cast<uint8_t>(color_node.AsArray().at(0).AsInt()),
-                    static_cast<uint8_t>(color_node.AsArray().at(1).AsInt()),
-                    static_cast<uint8_t>(color_node.AsArray().at(2).AsInt())
-                );
-            } else if (color_node.AsArray().size() == 4) {
-                color = svg::Rgba(
-                    static_cast<uint8_t>(color_node.AsArray().at(0).AsInt()),
-                    static_cast<uint8_t>(color_node.AsArray().at(1).AsInt()),
-                    static_cast<uint8_t>(color_node.AsArray().at(2).AsInt()),
-                    color_node.AsArray().at(3).AsDouble()
-                );
-            }
-        } else if (color_node.IsString()) {
-            color = color_node.AsString();
-        }
+        ParseColor(color_node, color);
         settings.color_palette.push_back(color);
     }
 }
