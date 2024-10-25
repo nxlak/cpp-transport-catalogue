@@ -128,7 +128,7 @@ private:
 };
     
 template <typename T>
-Node::Node(T val) : value_(val) {
+Node::Node(T val) : value_(std::move(val)) {
     
 }
     
