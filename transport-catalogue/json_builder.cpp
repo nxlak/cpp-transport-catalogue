@@ -7,6 +7,48 @@ using namespace std::literals;
 
 namespace json {
 
+// DictItemContext 
+KeyItemContext DictItemContext::Key(std::string key) {
+    return builder_.Key(std::move(key));
+}
+
+Builder& DictItemContext::EndDict() {
+    return builder_.EndDict();
+}
+
+// ArrayItemContext 
+ArrayItemContext& ArrayItemContext::Value(Node::Value value) {
+    builder_.Value(std::move(value));
+    return *this;
+}
+
+DictItemContext ArrayItemContext::StartDict() {
+    return builder_.StartDict();
+}
+
+ArrayItemContext ArrayItemContext::StartArray() {
+    return builder_.StartArray();
+}
+
+Builder& ArrayItemContext::EndArray() {
+    return builder_.EndArray();
+}
+
+// KeyItemContext 
+DictItemContext KeyItemContext::Value(Node::Value value) {
+    builder_.Value(std::move(value));
+    return DictItemContext(builder_);
+}
+
+DictItemContext KeyItemContext::StartDict() {
+    return builder_.StartDict();
+}
+
+ArrayItemContext KeyItemContext::StartArray() {
+    return builder_.StartArray();
+}
+
+// Builder 
 Builder::Builder()
     : root_()
     , nodes_stack_{&root_}
@@ -19,7 +61,7 @@ Node Builder::Build() {
     return std::move(root_);
 }
 
-Builder::DictValueContext Builder::Key(std::string key) {
+KeyItemContext Builder::Key(std::string key) {
     Node::Value& host_value = GetCurrentValue();
     
     if (!std::holds_alternative<Dict>(host_value)) {
@@ -29,25 +71,25 @@ Builder::DictValueContext Builder::Key(std::string key) {
     nodes_stack_.push_back(
         &std::get<Dict>(host_value)[std::move(key)]
     );
-    return BaseContext{*this};
+    return KeyItemContext(*this);
 }
 
-Builder::BaseContext Builder::Value(Node::Value value) {
-    AddObject(std::move(value), /* one_shot */ true);
+Builder& Builder::Value(Node::Value value) {
+    AddObject(std::move(value), true);
     return *this;
 }
 
-Builder::DictItemContext Builder::StartDict() {
-    AddObject(Dict{}, /* one_shot */ false);
-    return BaseContext{*this};
+DictItemContext Builder::StartDict() {
+    AddObject(Dict{}, false);
+    return DictItemContext(*this);
 }
 
-Builder::ArrayItemContext Builder::StartArray() {
-    AddObject(Array{}, /* one_shot */ false);
-    return BaseContext{*this};
+ArrayItemContext Builder::StartArray() {
+    AddObject(Array{}, false);
+    return ArrayItemContext(*this);
 }
 
-Builder::BaseContext Builder::EndDict() {
+Builder& Builder::EndDict() {
     if (!std::holds_alternative<Dict>(GetCurrentValue())) {
         throw std::logic_error("EndDict() outside a dict"s);
     }
@@ -55,18 +97,13 @@ Builder::BaseContext Builder::EndDict() {
     return *this;
 }
 
-Builder::BaseContext Builder::EndArray() {
+Builder& Builder::EndArray() {
     if (!std::holds_alternative<Array>(GetCurrentValue())) {
         throw std::logic_error("EndDict() outside an array"s);
     }
     nodes_stack_.pop_back();
     return *this;
 }
-    
-// Current value can be:
-// * Dict, when .Key().Value() or EndDict() is expected
-// * Array, when .Value() or EndArray() is expected
-// * nullptr (default), when first call or dict Value() is expected
 
 Node::Value& Builder::GetCurrentValue() {
     if (nodes_stack_.empty()) {
