@@ -64,7 +64,7 @@ private:
     std::vector<Node*> nodes_stack_;
 
     Node::Value& GetCurrentValue();
-    //я не придумал ничего лучше, чем использование bool one_shot
+    //я не придумал ничего лучше, чем использование bool one_shot + про отдельный метод AddObject мне писал даже наставник 
     //я уже увидел и разобрал хорошее решение, почему я не могу на него ориентироваться? 
     void AddObject(Node::Value value, bool one_shot);
 };
