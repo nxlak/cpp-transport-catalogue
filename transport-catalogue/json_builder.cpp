@@ -73,7 +73,7 @@ KeyItemContext Builder::Key(std::string key) {
     );
     return KeyItemContext(*this);
 }
-
+    
 Builder& Builder::Value(Node::Value value) {
     AddObject(std::move(value), true);
     return *this;
@@ -89,6 +89,7 @@ ArrayItemContext Builder::StartArray() {
     return ArrayItemContext(*this);
 }
 
+    
 Builder& Builder::EndDict() {
     if (!std::holds_alternative<Dict>(GetCurrentValue())) {
         throw std::logic_error("EndDict() outside a dict"s);
@@ -112,31 +113,22 @@ Node::Value& Builder::GetCurrentValue() {
     return nodes_stack_.back()->GetValue();
 }
 
-const Node::Value& Builder::GetCurrentValue() const {
-    return const_cast<Builder*>(this)->GetCurrentValue();
-}
-
-void Builder::AssertNewObjectContext() const {
-    if (!std::holds_alternative<std::nullptr_t>(GetCurrentValue())) {
-        throw std::logic_error("New object in wrong context"s);
-    }
-}
-
 void Builder::AddObject(Node::Value value, bool one_shot) {
     Node::Value& host_value = GetCurrentValue();
     if (std::holds_alternative<Array>(host_value)) {
-        Node& node
-            = std::get<Array>(host_value).emplace_back(std::move(value));
+        Node& node = std::get<Array>(host_value).emplace_back(std::move(value));
         if (!one_shot) {
             nodes_stack_.push_back(&node);
         }
     } else {
-        AssertNewObjectContext();
+        if (!std::holds_alternative<std::nullptr_t>(GetCurrentValue())) {
+            throw std::logic_error("New object in wrong context"s);
+        }
         host_value = std::move(value);
         if (one_shot) {
             nodes_stack_.pop_back();
         }
     }
 }
-
+    
 }  // namespace json
