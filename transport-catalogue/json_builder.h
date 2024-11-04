@@ -64,9 +64,8 @@ private:
     std::vector<Node*> nodes_stack_;
 
     Node::Value& GetCurrentValue();
-    const Node::Value& GetCurrentValue() const;
-    
-    void AssertNewObjectContext() const;
+    //я не придумал ничего лучше, чем использование bool one_shot
+    //я уже увидел и разобрал хорошее решение, почему я не могу на него ориентироваться? 
     void AddObject(Node::Value value, bool one_shot);
 };
 
