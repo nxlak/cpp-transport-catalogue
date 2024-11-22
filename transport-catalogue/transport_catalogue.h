@@ -63,7 +63,13 @@ public:
     std::deque<Stop> GetStops() const {
         return stops_;
     }
+    const std::unordered_map<std::string_view, Stop*>& GetStopNameToStopMap() const {
+        return stopname_to_stop_;
+    }
 
+    const std::unordered_map<std::string_view, Bus*>& GetBusNameToBusMap() const {
+        return busname_to_bus_;
+    }
 private:
     std::deque<Stop> stops_; 
     std::unordered_map<std::string_view, Stop*> stopname_to_stop_;
