@@ -84,19 +84,30 @@ void TransportRouter::AddBusEdges(const TransportCatalogue& catalogue) {
     }
 }
 
-std::optional<graph::Router<double>::RouteInfo> TransportRouter::FindRoute(std::string_view stop_from, std::string_view stop_to) const {
+std::optional<RouteResult> TransportRouter::FindRoute(std::string_view stop_from, std::string_view stop_to) const {
     auto from_it = stop_ids_.find(stop_from);
     auto to_it = stop_ids_.find(stop_to);
 
     if (from_it == stop_ids_.end() || to_it == stop_ids_.end()) {
-        return std::nullopt;
+        return std::nullopt; 
     }
 
-    return router_->BuildRoute(from_it->second, to_it->second);
+    auto route_info = router_->BuildRoute(from_it->second, to_it->second);
+    
+    if (!route_info) {
+        return std::nullopt; 
+    }
+
+    RouteResult result;
+    result.total_time = route_info->weight; 
+
+    result.edges = route_info->edges;
+
+    return result;
 }
 
-const graph::DirectedWeightedGraph<double>& TransportRouter::GetGraph() const {
-    return graph_;
+const graph::Edge<double>& TransportRouter::GetEdge(graph::EdgeId edge_id) const {
+    return graph_.GetEdge(edge_id);
 }
 
 } // namespace transport_catalogue
