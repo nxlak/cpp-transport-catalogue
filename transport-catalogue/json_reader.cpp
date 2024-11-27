@@ -1,4 +1,5 @@
 #include "json_reader.h"
+#include "transport_router.h"
 
 namespace json_reader {
 
@@ -99,39 +100,34 @@ void JsonReader::ProcessStateRequest(const json::Node& node, transport_catalogue
    } else if (type == "Map") {
        response_array.Key("map").Value(map_json);
    } else if (type == "Route") {
-       const auto& from_stop = node.AsDict().at("from").AsString();
-       const auto& to_stop = node.AsDict().at("to").AsString();
+        const auto& from_stop = node.AsDict().at("from").AsString();
+        const auto& to_stop = node.AsDict().at("to").AsString();
 
-       if (!catalogue.FindStop(from_stop) || !catalogue.FindStop(to_stop)) {
-           response_array.Key("error_message").Value("not found");
-       } else {
-           auto route_info = router.FindRoute(from_stop, to_stop);
-           if (!route_info) {
-               response_array.Key("error_message").Value("not found");
-           } else {
-               response_array.Key("total_time").Value(route_info->total_time); 
-               response_array.Key("items").StartArray();
-               for (const auto& edge_id : route_info->edges) { 
-                   const auto& edge = router.GetEdge(edge_id); 
-                   if (edge.quality == 0) { 
-                       response_array.StartDict()
-                           .Key("type").Value("Wait")
-                           .Key("stop_name").Value(edge.name)
-                           .Key("time").Value(edge.weight)
-                       .EndDict();
-                   } else { 
-                       response_array.StartDict()
-                           .Key("type").Value("Bus")
-                           .Key("bus").Value(edge.name)
-                           .Key("span_count").Value(static_cast<int>(edge.quality))
-                           .Key("time").Value(edge.weight)
-                       .EndDict();
-                   }
-               }
-               response_array.EndArray();
-           }
-       }
-   }
+        if (!catalogue.FindStop(from_stop) || !catalogue.FindStop(to_stop)) {
+            response_array.Key("error_message").Value("not found");
+        } else {
+            auto route_info = router.FindRoute(from_stop, to_stop);
+            if (!route_info) {
+                response_array.Key("error_message").Value("not found");
+            } else {
+                response_array.Key("total_time").Value(route_info->total_time); 
+                response_array.Key("items").StartArray();
+                for (const auto& item : route_info->items) {
+                    response_array.StartDict()
+                        .Key("type").Value(item.type == transport_catalogue::RouteItem::ItemType::Wait ? "Wait" : "Bus");
+                    if (item.type == transport_catalogue::RouteItem::ItemType::Wait) {
+                        response_array.Key("stop_name").Value(item.name);
+                    } else {
+                        response_array.Key("bus").Value(item.name)
+                                      .Key("span_count").Value(static_cast<int>(item.span_count));
+                    }
+                    response_array.Key("time").Value(item.time);
+                    response_array.EndDict();
+                }
+                response_array.EndArray();
+            }
+        }
+    }
 
    response_array.EndDict();
 }

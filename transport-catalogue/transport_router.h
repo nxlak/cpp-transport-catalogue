@@ -10,9 +10,20 @@
 
 namespace transport_catalogue {
 
+struct RouteItem {
+    enum class ItemType {
+        Wait,
+        Bus
+    };
+    ItemType type;
+    std::string name; 
+    double time;
+    size_t span_count; 
+};
+
 struct RouteResult {
-    double total_time; 
-    std::vector<graph::EdgeId> edges; 
+    double total_time;
+    std::vector<RouteItem> items;
 };
 
 class TransportRouter {
@@ -21,8 +32,6 @@ public:
 
     void BuildGraph(const TransportCatalogue& catalogue);
     std::optional<RouteResult> FindRoute(std::string_view stop_from, std::string_view stop_to) const;
-
-    const graph::Edge<double>& GetEdge(graph::EdgeId edge_id) const; 
 
 private:
     void InitializeStops(const TransportCatalogue& catalogue);
